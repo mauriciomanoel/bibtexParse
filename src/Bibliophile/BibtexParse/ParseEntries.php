@@ -39,7 +39,7 @@ class ParseEntries
 	public function openBib($file)
 	{
 		if(!is_file($file))
-			die;
+			throw new exception("File not found");
 		$this->fid = fopen ($file,'r');
 		$this->parseFile = TRUE;
 	}
@@ -406,7 +406,7 @@ class ParseEntries
 	//			$this->strings = FALSE;
 	//		if(empty($this->entries))
 	//			$this->entries = FALSE;
-		return array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings);
+		return reset(array_filter(array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings)));
 	}
 }
 ?>
