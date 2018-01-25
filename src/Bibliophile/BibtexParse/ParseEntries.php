@@ -105,7 +105,8 @@ class ParseEntries
 	{
 	// echo "**** ";print_r($seg);echo "<BR>";
 		// handle fields like another-field = {}
-		$array = preg_split("/,\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
+		// $array = preg_split("/,\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
+		$array = preg_split("/\",\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
 	// echo "**** ";print_r($array);echo "<BR>";
 		//$array = preg_split("/,\s*(\w+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
 		if(!array_key_exists(1, $array))
@@ -133,6 +134,7 @@ class ParseEntries
 			$pos = strpos($oldString, $value);
 			$oldString = substr_replace($oldString, '', $pos, strlen($value));
 		}
+		$oldString = str_replace('=",', '=,',$oldString);
 		$rev = strrev(trim($oldString));
 		if($rev{0} != ',')
 			$oldString .= ',';
