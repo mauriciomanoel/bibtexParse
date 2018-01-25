@@ -160,7 +160,7 @@ class ParseEntries
 			if ($key == "keywords") {
 				$value .= ";";
 			}
-			$this->entries[$this->count][$key] = $value;
+			@$this->entries[$this->count][$key] .= $value;
 		}
 	// echo "**** ";print_r($this->entries[$this->count]);echo "<BR>";
 	}
@@ -409,7 +409,8 @@ class ParseEntries
 	//			$this->strings = FALSE;
 	//		if(empty($this->entries))
 	//			$this->entries = FALSE;
-		return reset(array_filter(array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings)));
+		$array = reset(array_filter(array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings)));
+		return $array;
 	}
 }
 ?>
