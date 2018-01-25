@@ -4,6 +4,27 @@ namespace Bibliophile\BibtexParse;
 
 class ParseEntries
 {
+	/** @var array */
+	private $preamble = [];
+	/** @var array */
+	private $strings = [];
+	/** @var array */
+	private $undefinedStrings = [];
+	/** @var array */
+	private $entries = [];
+	/** @var int */
+	private $count = 0;
+	/** @var bool */
+	private $fieldExtract = false;
+	/** @var bool */
+	private $removeDelimit = false;
+	/** @var bool */
+	private $expandMacro = false;
+	/** @var bool */
+	private $parseFile = false;
+	/** @var bool */
+	private $outsideEntry = false;
+
 	function ParseEntries()
 	{
 		$this->preamble = $this->strings = $this->undefinedStrings = $this->entries = array();
@@ -14,7 +35,7 @@ class ParseEntries
 		$this->parseFile = TRUE;
 		$this->outsideEntry = TRUE;
 	}
-// Open bib file
+	// Open bib file
 	function openBib($file)
 	{
 		if(!is_file($file))
@@ -22,7 +43,7 @@ class ParseEntries
 		$this->fid = fopen ($file,'r');
 		$this->parseFile = TRUE;
 	}
-// Load a bibtex string to parse it
+	// Load a bibtex string to parse it
 	function loadBibtexString($bibtex_string)
 	{
 		if(is_string($bibtex_string))
@@ -32,17 +53,17 @@ class ParseEntries
 		$this->parseFile = FALSE;
 		$this->currentLine = 0;
 	}
-// Set strings macro
+	// Set strings macro
 	function loadStringMacro($macro_array)
 	{
 		$this->userStrings = $macro_array;
 	}
-// Close bib file
+	// Close bib file
 	function closeBib()
 	{
 		fclose($this->fid);
 	}
-// Get a non-empty line from the bib file or from the bibtexString
+	// Get a non-empty line from the bib file or from the bibtexString
 	function getLine()
 	{
 		if($this->parseFile)
@@ -69,8 +90,8 @@ class ParseEntries
 			return $line;
 		}
 	}
-// Extract value part of @string field enclosed by double-quotes or braces.
-// The string may be expanded with previously-defined strings
+	// Extract value part of @string field enclosed by double-quotes or braces.
+	// The string may be expanded with previously-defined strings
 	function extractStringValue($string) 
 	{
 		// $string contains a end delimiter, remove it
@@ -79,19 +100,19 @@ class ParseEntries
 		$string = $this->removeDelimitersAndExpand($string);
 		return $string;
 	}
-// Extract a field
+	// Extract a field
 	function fieldSplit($seg)
 	{
-// echo "**** ";print_r($seg);echo "<BR>";
+	// echo "**** ";print_r($seg);echo "<BR>";
 		// handle fields like another-field = {}
 		$array = preg_split("/,\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
-// echo "**** ";print_r($array);echo "<BR>";
+	// echo "**** ";print_r($array);echo "<BR>";
 		//$array = preg_split("/,\s*(\w+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
 		if(!array_key_exists(1, $array))
 			return array($array[0], FALSE);
 		return array($array[0], $array[1]);
 	}
-// Extract and format fields
+	// Extract and format fields
 	function reduceFields($oldString)
 	{
 		// 03/05/2005 G. Gardey. Do not remove all occurences, juste one
@@ -136,10 +157,10 @@ class ParseEntries
 			$value = trim($value);
 			$this->entries[$this->count][$key] = $value;
 		}
-// echo "**** ";print_r($this->entries[$this->count]);echo "<BR>";
+	// echo "**** ";print_r($this->entries[$this->count]);echo "<BR>";
 	}
-// Start splitting a bibtex entry into component fields.
-// Store the entry type and citation.
+	// Start splitting a bibtex entry into component fields.
+	// Store the entry type and citation.
 	function fullSplit($entry)
 	{        
 		$matches = preg_split("/@(.*)[{(](.*),/U", $entry, 2, PREG_SPLIT_DELIM_CAPTURE); 
@@ -152,7 +173,7 @@ class ParseEntries
 		$this->reduceFields($matches[3]);
 	}
 
-// Grab a complete bibtex entry
+	// Grab a complete bibtex entry
 	function parseEntry($entry)
 	{
 		$count = 0;
@@ -178,7 +199,7 @@ class ParseEntries
 		}
 	}
 
-// Remove delimiters from a string
+	// Remove delimiters from a string
 	function removeDelimiters($string)
 	{
 		if($string  && ($string{0} == "\""))
@@ -203,9 +224,9 @@ class ParseEntries
 		return $string;
 	}
 
-// This function works like explode('#',$val) but has to take into account whether
-// the character # is part of a string (i.e., is enclosed into "..." or {...} ) 
-// or defines a string concatenation as in @string{ "x # x" # ss # {xx{x}x} }
+	// This function works like explode('#',$val) but has to take into account whether
+	// the character # is part of a string (i.e., is enclosed into "..." or {...} ) 
+	// or defines a string concatenation as in @string{ "x # x" # ss # {xx{x}x} }
 	function explodeString($val)
 	{
 		$openquote = $bracelevel = $i = $j = 0; 
@@ -228,16 +249,16 @@ class ParseEntries
 		return $strings;
 	}
 
-// This function receives a string and a closing delimiter '}' or ')' 
-// and looks for the position of the closing delimiter taking into
-// account the following Bibtex rules:
-//  * Inside the braces, there can arbitrarily nested pairs of braces,
-//    but braces must also be balanced inside quotes! 
-//  * Inside quotes, to place the " character it is not sufficient 
-//    to simply escape with \": Quotes must be placed inside braces. 
+	// This function receives a string and a closing delimiter '}' or ')' 
+	// and looks for the position of the closing delimiter taking into
+	// account the following Bibtex rules:
+	//  * Inside the braces, there can arbitrarily nested pairs of braces,
+	//    but braces must also be balanced inside quotes! 
+	//  * Inside quotes, to place the " character it is not sufficient 
+	//    to simply escape with \": Quotes must be placed inside braces. 
 	function closingDelimiter($val,$delimitEnd)
 	{
-//  echo "####>$delimitEnd $val<BR>";
+	//  echo "####>$delimitEnd $val<BR>";
 		$openquote = $bracelevel = $i = $j = 0; 
 		while ($i < strlen($val))
 		{
@@ -252,11 +273,11 @@ class ParseEntries
 				return $i;
 			$i++;
 		}
-// echo "--> $bracelevel, $openquote";
+	// echo "--> $bracelevel, $openquote";
 		return 0;
 	}
 
-// Remove enclosures around entry field values.  Additionally, expand macros if flag set.
+	// Remove enclosures around entry field values.  Additionally, expand macros if flag set.
 	function removeDelimitersAndExpand($string, $inpreamble = FALSE)
 	{
 		// only expand the macro if flag set, if strings defined and not in preamble
@@ -281,10 +302,10 @@ class ParseEntries
 		return $string;
 	}
 
-// This function extract entries taking into account how comments are defined in BibTeX.
-// BibTeX splits the file in two areas: inside an entry and outside an entry, the delimitation 
-// being indicated by the presence of a @ sign. When this character is met, BibTex expects to 
-// find an entry. Before that sign, and after an entry, everything is considered a comment! 
+	// This function extract entries taking into account how comments are defined in BibTeX.
+	// BibTeX splits the file in two areas: inside an entry and outside an entry, the delimitation 
+	// being indicated by the presence of a @ sign. When this character is met, BibTex expects to 
+	// find an entry. Before that sign, and after an entry, everything is considered a comment! 
 	function extractEntries()
 	{
 		$inside = $possibleEntryStart = FALSE;
@@ -331,7 +352,7 @@ class ParseEntries
 		}
 	}
 
-// Return arrays of entries etc. to the calling process.
+	// Return arrays of entries etc. to the calling process.
 	function returnArrays()
 	{
 		foreach($this->preamble as $value)
@@ -375,14 +396,14 @@ class ParseEntries
 					$this->entries[$i][$key] = trim($this->removeDelimitersAndExpand($this->entries[$i][$key])); 
 			}
 		}
-// EZ: Remove this to be able to use the same instance for parsing several files, 
-// e.g., parsing a entry file with its associated abbreviation file
-//		if(empty($this->preamble))
-//			$this->preamble = FALSE;
-//		if(empty($this->strings))
-//			$this->strings = FALSE;
-//		if(empty($this->entries))
-//			$this->entries = FALSE;
+	// EZ: Remove this to be able to use the same instance for parsing several files, 
+	// e.g., parsing a entry file with its associated abbreviation file
+	//		if(empty($this->preamble))
+	//			$this->preamble = FALSE;
+	//		if(empty($this->strings))
+	//			$this->strings = FALSE;
+	//		if(empty($this->entries))
+	//			$this->entries = FALSE;
 		return array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings);
 	}
 }
