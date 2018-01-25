@@ -157,6 +157,9 @@ class ParseEntries
 			// $this->entries[$this->count][strtolower(trim($key))] = trim($this->removeDelimiters(trim($value)));
 			$key = strtolower(trim($key));
 			$value = trim($value);
+			if ($key == "keywords") {
+				$value .= ";";
+			}
 			$this->entries[$this->count][$key] = $value;
 		}
 	// echo "**** ";print_r($this->entries[$this->count]);echo "<BR>";
