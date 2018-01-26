@@ -103,11 +103,9 @@ class ParseEntries
 	// Extract a field
 	public function fieldSplit($seg)
 	{
-	// echo "**** ";print_r($seg);echo "<BR>";
 		// handle fields like another-field = {}
 		// $array = preg_split("/,\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
-		$array = preg_split("/\",\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
-	// echo "**** ";print_r($array);echo "<BR>";
+		$array = preg_split("/[}|\"],\s*([-_.:,a-zA-Z0-9]+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
 		//$array = preg_split("/,\s*(\w+)\s*={1}\s*/U", $seg, PREG_SPLIT_DELIM_CAPTURE);
 		if(!array_key_exists(1, $array))
 			return array($array[0], FALSE);
@@ -129,16 +127,17 @@ class ParseEntries
 			list($entry, $string) = $this->fieldSplit($string);
 			$values[] = $entry;
 		}
+		
 		foreach($values as $value)
 		{
 			$pos = strpos($oldString, $value);
 			$oldString = substr_replace($oldString, '', $pos, strlen($value));
-		}
+		}		
 		$oldString = str_replace('=",', '=,',$oldString);
 		$rev = strrev(trim($oldString));
 		if($rev{0} != ',')
-			$oldString .= ',';
-		$keys = preg_split("/=,/", $oldString);
+			$oldString .= ',';			 
+		$keys = preg_split("/=[}|,]/", $oldString);
 		// 22/08/2004 - Mark Grimshaw
 		// I have absolutely no idea why this array_pop is required but it is.  Seems to always be 
 		// an empty key at the end after the split which causes problems if not removed.
@@ -150,19 +149,16 @@ class ParseEntries
 			// remove any dangling ',' left on final field of entry
 			if($rev{0} == ',')
 				$value = rtrim($value, ",");
-			if(!$value)
-				continue;
-			// 21/08/2004 G.Gardey -> expand macro
-			// Don't remove delimiters now needs to know if the value is a string macro
-			// $this->entries[$this->count][strtolower(trim($key))] = trim($this->removeDelimiters(trim($value)));
-			$key = strtolower(trim($key));
+			if(!$value) continue;
+			
+			$key = str_replace(", ", "", strtolower(trim($key)));
 			$value = trim($value);
 			if ($key == "keywords") {
-				$value .= ";";
+				$value .= ", ";
 			}
+			
 			@$this->entries[$this->count][$key] .= $value;
 		}
-	// echo "**** ";print_r($this->entries[$this->count]);echo "<BR>";
 	}
 	// Start splitting a bibtex entry into component fields.
 	// Store the entry type and citation.
@@ -394,21 +390,22 @@ class ParseEntries
 		{
 			for($i = 0; $i < count($this->entries); $i++)
 			{
-				foreach($this->entries[$i] as $key => $value)
-				// 02/05/2005 G. Gardey don't expand macro for bibtexCitation 
-				// and bibtexEntryType
-				if($key != 'bibtexCitation' && $key != 'bibtexEntryType')
-					$this->entries[$i][$key] = trim($this->removeDelimitersAndExpand($this->entries[$i][$key])); 
+				foreach($this->entries[$i] as $key => $value) 
+				{
+					if($key != 'bibtexCitation' && $key != 'bibtexEntryType') 
+					{
+						$value = trim($this->removeDelimitersAndExpand($this->entries[$i][$key]));
+						if (strpos($value, "{") === 0) {
+							$value = substr($value, 1);
+						}
+						$value = str_replace(array("},", ", \""), array("", ", "), $value);
+						$this->entries[$i][$key] = $value;
+					}
+						
+				}
 			}
 		}
-	// EZ: Remove this to be able to use the same instance for parsing several files, 
-	// e.g., parsing a entry file with its associated abbreviation file
-	//		if(empty($this->preamble))
-	//			$this->preamble = FALSE;
-	//		if(empty($this->strings))
-	//			$this->strings = FALSE;
-	//		if(empty($this->entries))
-	//			$this->entries = FALSE;
+
 		$array = array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings);
 		$array = array_filter($array);
 		$array = reset($array);
@@ -416,4 +413,3 @@ class ParseEntries
 	}
 }
 ?>
-
