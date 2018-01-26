@@ -409,7 +409,9 @@ class ParseEntries
 	//			$this->strings = FALSE;
 	//		if(empty($this->entries))
 	//			$this->entries = FALSE;
-		$array = reset(array_filter(array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings)));
+		$array = array($this->preamble, $this->strings, $this->entries, $this->undefinedStrings);
+		$array = array_filter($array);
+		$array = reset($array);
 		return $array;
 	}
 }
