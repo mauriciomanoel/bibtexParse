@@ -361,6 +361,7 @@ class ParseEntries
 		}
 	}
 
+	// Return arrays of entries bibtex.
 	public function bibtexInArray() {
 		return $this->entriesBibtex;
 	}
