@@ -12,6 +12,8 @@ class ParseEntries
 	private $undefinedStrings = [];
 	/** @var array */
 	private $entries = [];
+	/** @var array */
+	private $entriesBibtex = [];
 	/** @var int */
 	private $count = 0;
 	/** @var bool */
@@ -27,7 +29,7 @@ class ParseEntries
 
 	public function ParseEntries()
 	{
-		$this->preamble = $this->strings = $this->undefinedStrings = $this->entries = array();
+		$this->preamble = $this->strings = $this->undefinedStrings = $this->entries = $this->entriesBibtex = array();
 		$this->count = 0;
 		$this->fieldExtract = TRUE;
 		$this->removeDelimit = TRUE;
@@ -334,23 +336,33 @@ class ParseEntries
 			if ($inside)
 			{
 				$entry .= " ".$line;
+				
 				if ($j=$this->closingDelimiter($entry,$delimitEnd))
 				{
 					// all characters after the delimiter are thrown but the remaining 
 					// characters must be kept since they may start the next entry !!!
 					$lastLine = substr($entry,$j+1);
-					$entry = substr($entry,0,$j+1);
+					$entry = substr($entry,0,$j+1);					
 					// Strip excess whitespaces from the entry 
 					$entry = preg_replace('/\s\s+/', ' ', $entry);
+					$bibtex = $entry;
 					$this->parseEntry($entry);
+					// var_dump($entry); FAZER ALTERAÇAO AQUI
 					$entry = strchr($lastLine,"@");
-					if ($entry) 
+					if ($entry) {
 						$inside = TRUE;
-					else 
+					}
+					else {
+						$this->entriesBibtex[] = trim($bibtex);
 						$inside = FALSE;
+					}
 				}
 			}
 		}
+	}
+
+	public function bibtexInArray() {
+		return $this->entriesBibtex;
 	}
 
 	// Return arrays of entries etc. to the calling process.
