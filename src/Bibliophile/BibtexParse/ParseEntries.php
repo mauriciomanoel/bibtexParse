@@ -120,7 +120,12 @@ class ParseEntries
 		// * correctly parse an entry ended by: somefield = {aValue}}
 		$lg = strlen($oldString);
 		if($oldString[$lg-1] == "}" || $oldString[$lg-1] == ")" || $oldString[$lg-1] == ",")
-			$oldString = substr($oldString,0,$lg-1);
+		{
+			$oldString = rtrim($oldString, "}");
+			$oldString = rtrim($oldString, ")");
+			$oldString = rtrim($oldString, ",");
+		}
+			// $oldString = substr($oldString,0,$lg-1);
 		// $oldString = rtrim($oldString, "}),");
 		$split = preg_split("/=/", $oldString, 2);
 		$string = $split[1];
@@ -206,17 +211,14 @@ class ParseEntries
 	public function removeDelimiters($string)
 	{
 		if($string  && ($string{0} == "\""))
-		{
-			$string = substr($string, 1);
-			$string = substr($string, 0, -1);
+		{	
+			$string = ltrim($string, "\"");
+			$string = rtrim($string, "\"");
 		}
 		else if($string && ($string{0} == "{"))
 		{
-			if(strlen($string) > 0 && $string[strlen($string)-1] == "}")
-			{
-				$string = substr($string, 1);
-				$string = substr($string, 0, -1);
-			}
+			$string = ltrim($string, "}");
+			$string = rtrim($string, "}");
 		}
 		else if(!is_numeric($string) && !array_key_exists($string, $this->strings)
 			 && (array_search($string, $this->undefinedStrings) === FALSE))
